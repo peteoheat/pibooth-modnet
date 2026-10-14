@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.onnx
+*.part
+modnet-test.jpg
+out.jpg
+.venv/
+venv/
+.vscode/
+.idea/
