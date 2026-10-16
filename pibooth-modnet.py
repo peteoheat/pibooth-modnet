@@ -605,10 +605,13 @@ def state_capture_exit(app):
         CTRL.submit_capture(app.camera, captures[-1])
 
 
-@_plugin_hookimpl
+@_plugin_hookimpl(tryfirst=True)
 def pibooth_setup_picture_factory(factory):
+    # This is a firstresult hook: plugins such as pibooth-picture-template return
+    # a new factory built from factory._images, which stops later plugins from
+    # running. Run first so the images are already replaced when they do.
     CTRL.replace_images(factory)
-    # Return nothing: the factory is updated in place (firstresult hook)
+    # Return nothing: the factory is updated in place
 
 
 @_plugin_hookimpl
