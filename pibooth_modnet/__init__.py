@@ -18,8 +18,8 @@ Speed strategy
   resized backgrounds and overlays are cached per theme and capture size.
 * Themes with only an overlay skip the AI step entirely.
 
-Install by adding the path of this file to ``[GENERAL] plugins`` in
-``pibooth.cfg``. See README.md for the full guide.
+Install with ``pip install pibooth-modnet``; pibooth discovers it automatically.
+See README.md for the full guide.
 """
 
 import os
@@ -626,8 +626,8 @@ def pibooth_cleanup():
 
 # --------------------------------------------------------------------------
 # Command line: download the model and benchmark before an event
-#   python3 pibooth-modnet.py --download
-#   python3 pibooth-modnet.py --test photo.jpg path/to/theme_folder [out.jpg]
+#   pibooth-modnet --download
+#   pibooth-modnet --test photo.jpg path/to/theme_folder [out.jpg]
 # --------------------------------------------------------------------------
 
 def _main(argv):
@@ -657,9 +657,9 @@ def _main(argv):
         print("Saved", output)
         return 0
 
-    print(__doc__.split('Install')[0])
-    print("Usage:\n  python3 pibooth-modnet.py --download\n"
-          "  python3 pibooth-modnet.py --test photo.jpg themes/My_Theme [out.jpg]")
+    print(__doc__.split('Install with')[0])
+    print("Usage:\n  pibooth-modnet --download\n"
+          "  pibooth-modnet --test photo.jpg themes/My_Theme [out.jpg]")
     return 1
 
 

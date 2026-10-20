@@ -23,32 +23,63 @@ leaves backgrounds unchanged.
 
 ## Install
 
+On Raspberry Pi OS Trixie, pip refuses to install into the system Python (PEP 668), so choose one of the options below.
+In both, OpenCV comes from apt so it matches the system numpy; it is optional, and without it edge refinement is
+skipped.
+
+### Option 1: virtual environment (recommended)
+
 ```bash
-# OpenCV from apt (matches the system numpy), ONNX Runtime from pip
+sudo apt install python3-opencv python3-picamera2 python3-venv
+
+# --system-site-packages lets the venv see the apt-installed picamera2 and OpenCV
+python3 -m venv --system-site-packages ~/pibooth-venv
+source ~/pibooth-venv/bin/activate
+
+pip install pibooth pibooth-modnet     # skip "pibooth" if it is already in the venv
+```
+
+Everything that runs pibooth must use this venv: start it with `~/pibooth-venv/bin/pibooth`, and in an autostart
+entry or systemd service use that full path instead of `pibooth`. The model download command below needs the venv
+too (`~/pibooth-venv/bin/pibooth-modnet --download`, or activate it first).
+
+If pibooth is already installed in an existing venv, activate that one and run only `pip install pibooth-modnet`.
+
+### Option 2: system Python, no venv
+
+```bash
 sudo apt install python3-opencv
-pip install onnxruntime        # use the same Python / venv that runs pibooth
+pip install --break-system-packages pibooth-modnet
 ```
 
-If pibooth runs in a virtual environment, create it with `--system-site-packages` so it can see the apt-installed
-`picamera2` and `python3-opencv`.
+This is simpler but can clash with apt-managed packages. Use it only if your pibooth is already installed this way.
 
-Copy `pibooth-modnet.py` somewhere, e.g. `~/.config/pibooth/plugins/`, and add it to `pibooth.cfg`:
+### Without the apt OpenCV
 
-```ini
-[GENERAL]
-plugins = ~/.config/pibooth/plugins/pibooth-modnet.py
-```
+`pip install "pibooth-modnet[opencv]"` installs `opencv-python-headless` from PyPI instead. Do not install both.
 
-(Separate several plugins with commas, alongside your gallery, QR code, rclone and WLED plugins.)
+pibooth discovers the plugin automatically; no `plugins =` line in `pibooth.cfg` is needed. Check the start-up log
+for `Installed plugins: ... modnet-1.0.0`.
 
 Download the model (about 26 MB) before your first event, so the booth never needs the internet:
 
 ```bash
-python3 ~/.config/pibooth/plugins/pibooth-modnet.py --download
+pibooth-modnet --download
 ```
 
 It is saved to `~/.config/pibooth/models/modnet.onnx` and checked against a SHA-256 hash. If the download fails,
 copy `modnet.onnx` from the photobooth-app repository (`src/photobooth/utils/rembg/models/`) to that path.
+
+### Upgrading from the single-file plugin
+
+If you used the old `pibooth-modnet.py` file, remove its path from `[GENERAL] plugins` in `pibooth.cfg` (otherwise
+the plugin loads twice), then install from PyPI as above. Your `[MODNET]` settings are kept.
+
+### Known issue: onnxruntime 1.21 on Raspberry Pi
+
+onnxruntime 1.21 prints many `Schema error: Trying to register schema ... already registered` lines when the model
+loads. They are harmless, but 1.20.1 is clean; the package therefore excludes 1.21.x. If pip left you on 1.21, run
+`pip install onnxruntime==1.20.1`.
 
 ## Themes
 
@@ -105,7 +136,7 @@ All options live in the `[MODNET]` section and are added to `pibooth.cfg` automa
 Before an event, run a real capture through a theme:
 
 ```bash
-python3 pibooth-modnet.py --test ~/Pictures/pibooth/raw/<date>/pibooth000.jpg ~/.config/pibooth/themes/Beach out.jpg
+pibooth-modnet --test ~/Pictures/pibooth/raw/<date>/pibooth000.jpg ~/.config/pibooth/themes/Beach out.jpg
 ```
 
 It prints the matte and composite times for three runs and saves the result. On a 2-core x86 test machine a
@@ -125,3 +156,20 @@ finishes within your `[WINDOW] preview_delay`.
 * MODNet by Ke et al., Apache-2.0 — https://github.com/ZHKKKe/MODNet
 * ONNX model file as packaged by photobooth-app, MIT — https://github.com/photobooth-app/photobooth-app
 * Plugin: MIT
+
+## Development and releasing
+
+```bash
+git clone https://github.com/peteoheat/pibooth-modnet && cd pibooth-modnet
+pip install -e .
+```
+
+To publish a release to PyPI:
+
+1. Bump `__version__` in `pibooth_modnet/__init__.py` and add an entry to `CHANGELOG.md`.
+2. One-off setup: on pypi.org add a *trusted publisher* for the project (owner `peteoheat`, repository
+   `pibooth-modnet`, workflow `publish.yml`, environment `pypi`), and create a `pypi` environment in the GitHub
+   repository settings.
+3. Create a GitHub release for the new tag. The `Publish to PyPI` workflow builds and uploads it.
+
+To publish by hand instead: `pip install build twine && python -m build && twine upload dist/*`.

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pibooth-modnet"
+dynamic = ["version"]
+description = "pibooth plugin: AI background replacement and overlays using MODNet portrait matting (ONNX Runtime, CPU)"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+keywords = ["pibooth", "photobooth", "raspberry pi", "background removal", "modnet", "onnx"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Other Environment",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+    "pibooth>=2.1.0",
+    "numpy",
+    "Pillow",
+    # 1.21.x prints harmless but noisy "Schema error" lines on Raspberry Pi
+    "onnxruntime>=1.16,!=1.21.*",
+]
+
+[project.optional-dependencies]
+# Edge refinement needs OpenCV. On Raspberry Pi OS prefer `sudo apt install python3-opencv`.
+opencv = ["opencv-python-headless"]
+
+[project.urls]
+Homepage = "https://github.com/peteoheat/pibooth-modnet"
+Issues = "https://github.com/peteoheat/pibooth-modnet/issues"
+
+[project.scripts]
+pibooth-modnet = "pibooth_modnet:main"
+
+# pibooth discovers plugins through this entry point group
+[project.entry-points.pibooth]
+pibooth_modnet = "pibooth_modnet"
+
+[tool.setuptools]
+packages = ["pibooth_modnet"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pibooth_modnet.__version__" }

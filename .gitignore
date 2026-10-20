@@ -8,3 +8,6 @@ out.jpg
 venv/
 .vscode/
 .idea/
+dist/
+build/
+*.egg-info/
