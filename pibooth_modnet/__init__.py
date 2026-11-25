@@ -58,7 +58,7 @@ except ImportError:  # Allow the command line tools to run without pibooth
     LOGGER = logging.getLogger("pibooth-modnet")
 
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 SECTION = 'MODNET'
 
@@ -417,7 +417,9 @@ class ModnetController(object):
         self.pending.append(self.executor.submit(self._process_raw, camera, copy, theme))
 
     def _process_raw(self, camera, capture_data, theme):
-        image = camera._post_process_capture(capture_data)  # Same rotation, crop, flip and effect
+        # Same rotation, crop, flip and effect (pibooth 3: _process_capture, pibooth 2: _post_process_capture)
+        process = getattr(camera, '_process_capture', None) or camera._post_process_capture
+        image = process(capture_data)
         return self._process_image(image, theme)
 
     def _process_image(self, image, theme):
@@ -563,14 +565,16 @@ def pibooth_startup(cfg, app):
 
     # Wrap the camera so raw captures can be matched to processed ones
     camera = app.camera
-    original_get_captures = camera.get_captures
+    # pibooth 3 calls it grab_captures(), pibooth 2 get_captures()
+    method = 'grab_captures' if hasattr(camera, 'grab_captures') else 'get_captures'
+    original = getattr(camera, method)
 
-    def get_captures():
-        captures = original_get_captures()
+    def wrapped():
+        captures = original()
         CTRL.bind_captures(captures)
         return captures
 
-    camera.get_captures = get_captures
+    setattr(camera, method, wrapped)
 
 
 @_plugin_hookimpl(trylast=True)

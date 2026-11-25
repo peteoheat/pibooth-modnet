@@ -59,7 +59,7 @@ This is simpler but can clash with apt-managed packages. Use it only if your pib
 `pip install "pibooth-modnet[opencv]"` installs `opencv-python-headless` from PyPI instead. Do not install both.
 
 pibooth discovers the plugin automatically; no `plugins =` line in `pibooth.cfg` is needed. Check the start-up log
-for `Installed plugins: ... modnet-1.0.0`.
+for `Installed plugins: ... modnet-1.0.1`.
 
 Download the model (about 26 MB) before your first event, so the booth never needs the internet:
 
